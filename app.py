@@ -73,7 +73,7 @@ def bl(returns, weights, aversion=3, tau=.1, relative_confidence=1, q=None, p=No
     opt_std = float(np.sqrt(np.matmul(np.matmul(constrained_w, post_dist), constrained_w.transpose())))
     opt_sharpe = float(er/opt_std)
     final_w = pd.DataFrame(constrained_w, columns=returns.columns, index = [['Asset Class Weights']]).transpose()
-    final_w = np.transpose(list(final_w.to_numpy().T[0]))
+    final_w = list(final_w.to_numpy().T[0])
     final_stats = pd.DataFrame([er, opt_std, opt_sharpe], columns = [['Portfolio Statistics (Weekly)']], index = [['Expected Return', 'Standard Deviation', 'Sharpe Ratio']]) #Need to annualize
     return final_w, final_stats
 
