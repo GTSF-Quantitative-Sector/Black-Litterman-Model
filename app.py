@@ -36,7 +36,7 @@ def create_black_litterman():
     print(new_q)
     print(new_weights)
 
-    new_weights = np.array(new_weights)
+    new_weights = np.transpose(np.array(new_weights))
     new_p = np.array(new_p)
 
     start = '2018-01-01'
