@@ -15,9 +15,6 @@ def create_black_litterman():
     p = request.json['p']
     q = request.json['q']
 
-    print(p)
-    print(q)
-
     if p == -1:
         p = None
     else:
@@ -28,11 +25,16 @@ def create_black_litterman():
     else:
         q = np.array(q)
 
+    print(p)
+    print(q)
+
     weights = np.array(request.json['weights'])
 
     print(weights)
 
-    returns = get_data('2018-01-01', end, tckr_list)
+    start = '2018-01-01'
+    end = dt.now()
+    returns = get_data(start, end, tckr_list)
     weight_output, _ = bl(returns, weights, q=q, p=p)
 
     return jsonify(weight_output)
@@ -69,9 +71,6 @@ def bl(returns, weights, aversion=3, tau=.1, relative_confidence=1, q=None, p=No
     return final_w, final_stats
 
 def get_data(start, end=None, tckr_list=DEFAULT_TICKERS, per='W'):
-
-    if end is None:
-        end = dt.now()
 
     # Loop to grab the price data from yahoo finance and combine them into one pandas dataframe
     stock_data = pd.DataFrame()
