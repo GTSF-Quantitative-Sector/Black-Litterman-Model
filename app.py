@@ -15,22 +15,10 @@ def create_black_litterman():
 
     p = request.json['p']
     q = request.json['q']
-
-    if p == -1:
-        p = None
-    else:
-        p = np.array(p)
-
-    if q == -1:
-        q = None
-    else:
-        q = np.array(q)
+    weights = request.json['weights']
 
     print(p)
     print(q)
-
-    weights = np.array(request.json['weights'])
-
     print(weights)
 
     start = '2018-01-01'
