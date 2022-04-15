@@ -35,7 +35,7 @@ def create_black_litterman():
 
     start = '2018-01-01'
     end = dt.now()
-    returns = get_data(start, end, tckr_list)
+    returns = get_data(start, end, DEFAULT_TICKERS)
     weight_output, _ = bl(returns, weights, q=q, p=p)
 
     return jsonify(weight_output)
