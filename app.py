@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pandas_datareader as web
 import yfinance as yf
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from datetime import datetime as dt
 
 app = Flask(__name__)
