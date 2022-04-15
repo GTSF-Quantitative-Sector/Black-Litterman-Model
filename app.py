@@ -46,7 +46,7 @@ def create_black_litterman():
 
     return jsonify(weight_output)
 
-def bl(returns, weights, aversion=3, tau=.1, relative_confidence=1, q=None, p=None):
+def bl(returns, weights, aversion=3, tau=.1, relative_confidence=.53, q=None, p=None):
 
     if q is None or p is None:
         return list(weights.T[0]), None
