@@ -32,9 +32,9 @@ def create_black_litterman():
         if el != ['']:
             new_weights.append(el)
 
-    print(p)
-    print(q)
-    print(weights)
+    print(new_p)
+    print(new_q)
+    print(new_weights)
 
     new_weights = np.array(new_weights)
     new_p = np.array(new_p)
