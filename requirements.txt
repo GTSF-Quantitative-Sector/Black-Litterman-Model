@@ -1,3 +1,10 @@
-django
+Flask
+pandas
+numpy
+python-dateutil
+pandas-datareader
+plotly
+yfinance
+requests
+datetime
 gunicorn
-django-heroku
