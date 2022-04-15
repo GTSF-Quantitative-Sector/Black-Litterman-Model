@@ -32,7 +32,7 @@ def create_black_litterman():
 
     print(weights)
 
-    returns = get_data(start, end, tckr_list)
+    returns = get_data('2018-01-01', end, tckr_list)
     weight_output, _ = bl(returns, weights, q=q, p=p)
 
     return jsonify(weight_output)
@@ -72,7 +72,7 @@ def get_data(start, end=None, tckr_list=DEFAULT_TICKERS, per='W'):
 
     if end is None:
         end = dt.now()
-    
+
     # Loop to grab the price data from yahoo finance and combine them into one pandas dataframe
     stock_data = pd.DataFrame()
     for tckr in tckr_list:
