@@ -10,7 +10,7 @@ from flask import Flask, request
 app = Flask(__name__)
 app.config["DEBUG"] = True
 
-@app.route('/api/v1/capture', methods=['POST'])
+@app.route('/api/v1/frozen-caverns-62999', methods=['POST'])
 def create_upside_downside():
 
     start = dt.datetime.strptime(request.json["start"], '%Y-%m-%d').date()
