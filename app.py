@@ -17,14 +17,32 @@ def create_black_litterman():
     q = request.json['q']
     weights = request.json['weights']
 
+    new_q = []
+    for el in q:
+        if el != ['']:
+            new_q.append(el)
+
+    new_p = []
+    for el in p:
+        if el != ['', '', '', '', '', '', '', '', '', '']:
+            new_p.append(el)
+
+    new_weights = []
+    for el in weights:
+        if el != ['']:
+            new_weights.append(el)
+
     print(p)
     print(q)
     print(weights)
 
+    new_weights = np.array(new_weights)
+    new_p = np.array(new_p)
+
     start = '2018-01-01'
     end = dt.now()
     returns = get_data(start, end, DEFAULT_TICKERS)
-    weight_output, _ = bl(returns, weights, q=q, p=p)
+    weight_output, _ = bl(returns, new_weights, q=new_q, p=new_p)
 
     return jsonify(weight_output)
 
