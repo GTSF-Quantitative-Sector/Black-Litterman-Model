@@ -1,8 +1,5 @@
 import pandas as pd
 import numpy as np
-import datetime as dt
-import plotly.express as px
-import plotly.graph_objects as go
 import pandas_datareader as web
 import yfinance as yf
 from flask import Flask, request
@@ -10,20 +7,71 @@ from flask import Flask, request
 app = Flask(__name__)
 app.config["DEBUG"] = True
 
-@app.route('/', methods=['POST'])
-def create_upside_downside():
+DEFAULT_TICKERS = ['BIL', 'XLC', 'XLE', 'XLF', 'XLI', 'XLK', 'XLP', 'XLRE', 'XLU', 'XLV', 'XLY']
 
-    start = dt.datetime.strptime(request.json["start"], '%Y-%m-%d').date()
-    end = dt.datetime.strptime(request.json["end"], '%Y-%m-%d').date()
-    tckr_list = request.json["tckr_list"]
-    per = request.json["per"]
+@app.route('/api/v1/blmodel', methods=['POST'])
+def create_black_litterman():
 
-    data = get_data(start, end, tckr_list, per)
-    up, down = buckets(data)
-    capture_calcs = capture(up, down)
-    return capture_calcs.to_json()
+    p = request.json['p']
+    q = request.json['q']
 
-def get_data(start, end, tckr_list, per):
+    print(p)
+    print(q)
+
+    if p == -1:
+        p = None
+    else:
+        p = np.array(p)
+
+    if q == -1:
+        q = None
+    else:
+        q = np.array(q)
+
+    weights = np.array(request.json['weights'])
+
+    print(weights)
+
+    returns = get_data(start, end, tckr_list)
+    weight_output, _ = bl(returns, weights, q=q, p=p)
+
+    return jsonify(weight_output)
+
+def bl(returns, weights, aversion=3, tau=.1, relative_confidence=1, q=None, p=None):
+
+    if q is None or p is None:
+        return list(weights.T[0]), None
+
+    tau_omega = tau/relative_confidence # calculated or given
+    
+    #calculations
+    cov = np.array(returns.cov())
+    prior_returns = aversion * np.matmul(cov,weights)
+    cov_tau = tau * cov
+    mkt_var = float(np.matmul(weights.transpose(), np.matmul(cov, weights)))
+    std = float(np.sqrt(np.matmul(np.matmul(weights.transpose(), cov), weights)))
+    mkt_excess_return = aversion * mkt_var
+    mkt_sharpe = mkt_excess_return/std
+    omega = tau_omega * np.matmul(p, np.matmul(cov, p.transpose()))
+    prior_prec_views = np.matmul(p, np.matmul(tau*cov, p.transpose()))
+    post_returns = prior_returns + np.matmul(np.matmul(cov_tau, np.matmul(p.transpose(), np.linalg.inv(prior_prec_views + omega))),q - np.matmul(p, prior_returns))
+    post_dist = np.add(cov, np.subtract(cov_tau, np.matmul(np.matmul(np.matmul(cov_tau, p.transpose()), np.linalg.inv(prior_prec_views + omega)), np.matmul(p, cov_tau))))
+    unconstrained_w = np.matmul(post_returns.transpose(), np.linalg.inv(aversion*post_dist))
+
+    #outputs for the assignment
+    constrained_w = unconstrained_w/np.sum(unconstrained_w)
+    er = float(np.matmul(post_returns.transpose(), constrained_w.transpose()))
+    opt_std = float(np.sqrt(np.matmul(np.matmul(constrained_w, post_dist), constrained_w.transpose())))
+    opt_sharpe = float(er/opt_std)
+    final_w = pd.DataFrame(constrained_w, columns=returns.columns, index = [['Asset Class Weights']]).transpose()
+    final_w = list(final_w.to_numpy().T[0])
+    final_stats = pd.DataFrame([er, opt_std, opt_sharpe], columns = [['Portfolio Statistics (Weekly)']], index = [['Expected Return', 'Standard Deviation', 'Sharpe Ratio']]) #Need to annualize
+    return final_w, final_stats
+
+def get_data(start, end=None, tckr_list=DEFAULT_TICKERS, per='W'):
+
+    if end is None:
+        end = dt.now()
     
     # Loop to grab the price data from yahoo finance and combine them into one pandas dataframe
     stock_data = pd.DataFrame()
@@ -38,27 +86,11 @@ def get_data(start, end, tckr_list, per):
             data = data.iloc[
                    ((len(data.index) - 1) % 5)::5].pct_change().dropna()  # converts price data into weekly returns data
         stock_data[tckr] = data['Close']  # appends to overall/output dataframe
+
+    stock_data = stock_data.subtract(stock_data['BIL'], axis=0)
+    stock_data = stock_data.drop('BIL', axis=1)
+
     return stock_data
-
-def buckets(data):
-    avg = data.iloc[:, 0].mean() #grabs the average from the 1st column, which will always be the reference inputted by the user
-    data['Direction'] = np.where(data.iloc[:, 0] >= avg, 1, 0) #look up np.where() for info on this function, np is numpy which is a common python library
-    up_data = data.loc[data['Direction'] == 1].drop(['Direction'], axis = 1) #grabs up data
-    down_data = data.loc[data['Direction'] == 0].drop(['Direction'], axis = 1) #grabs down data
-    return up_data, down_data
-
-def capture(up, down):
-    cap = pd.DataFrame()
-
-    for i in [up, down]:
-        ref = i.iloc[:, 0] + 1
-        lis = {}
-        for j in i:
-            stock = i[j] + 1
-            lis[j] = (np.prod(stock)-1)/(np.prod(ref)-1) *100
-        cap = cap.append(lis, ignore_index = True)
-    cap.index = ['Up Capture', 'Down Capture']
-    return cap
 
 if __name__ == '__main__':
     app.run()
