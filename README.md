@@ -1,1 +1,1 @@
-# BLModel
+# Black-Litterman Model
